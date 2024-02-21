@@ -15,8 +15,8 @@ function heuristics(a, b) {
   return d;
 }
 
-let cols = 20;
-let rows = 20;
+let cols = 50;
+let rows = 50;
 let grid = new Array(cols);
 
 // the spots to be reviewed
@@ -27,6 +27,7 @@ let start;
 let end;
 let w, h;
 let path = [];
+let noSolution = false;
 
 class Spot {
   constructor(i, j) {
@@ -41,7 +42,7 @@ class Spot {
     this.previous = undefined;
     this.wall = false;
 
-    if (random(1) < 0.1) {
+    if (random(1) < 0.3) {
       this.wall = true;
     }
   }
@@ -74,11 +75,27 @@ class Spot {
     if (j > 0) {
       this.neightbors.push(grid[i][j - 1]);
     }
+
+    if (i > 0 && j > 0) {
+      this.neightbors.push(grid[i - 1][j - 1]);
+    }
+
+    if (i < cols - 1 && j > 0) {
+      this.neightbors.push(grid[i + 1][j - 1]);
+    }
+
+    if (i > 0 && j < rows - 1) {
+      this.neightbors.push(grid[i - 1][j + 1]);
+    }
+
+    if (i < cols - 1 && j < rows - 1) {
+      this.neightbors.push(grid[i + 1][j + 1]);
+    }
   }
 }
 
 function setup() {
-  createCanvas(400, 400);
+  createCanvas(500, 500);
   console.log('A*');
 
   w = width / cols;
@@ -103,6 +120,8 @@ function setup() {
 
   start = grid[0][0];
   end = grid[cols - 1][rows - 1];
+  start.wall = false;
+  end.wall = false;
 
   openSet.push(start);
   console.log(grid);
@@ -145,25 +164,33 @@ function draw() {
     for (let i = 0; i < neightbors.length; i++) {
       let neightbor = neightbors[i];
 
-      if (!closedSet.includes(neightbor)) {
+      if (!closedSet.includes(neightbor) && !neightbor.wall) {
         let tempG = current.g + 1;
 
+        let newPath = false;
         if (openSet.includes(neightbor)) {
           if (tempG < neightbor.g) {
             neightbor.g = tempG;
+            newPath = true;
           }
         } else {
           neightbor.g = tempG;
+          newPath = true;
           openSet.push(neightbor);
         }
 
-        neightbor.h = heuristics(neightbor, end);
-        neightbor.f = neightbor.g + neightbor.h;
-        neightbor.previous = current;
+        if (newPath) {
+          neightbor.h = heuristics(neightbor, end);
+          neightbor.f = neightbor.g + neightbor.h;
+          neightbor.previous = current;
+        }
       }
     }
   } else {
     // no solution
+    console.log('No solution');
+    noLoop();
+    return;
   }
 
   background(0);
